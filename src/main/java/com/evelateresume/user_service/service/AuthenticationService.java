@@ -47,12 +47,7 @@ public class AuthenticationService {
     }
 
     public UserDetails registerUser(RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.email())) {
-            throw new UserAlreadyExistsException();
-        }
-        if (userRepository.existsByUsername(registerRequest.username())) {
-            throw new UsernameAlreadyExistsException();
-        }
+        validateUserDetailsExistence(registerRequest.email(), registerRequest.username());
 
         String encodedPassword = bCryptPasswordEncoder.encode(registerRequest.password());
         User user = new User();
@@ -63,5 +58,14 @@ public class AuthenticationService {
         user.setEmail(registerRequest.email());
 
         return userRepository.save(user);
+    }
+
+    private void validateUserDetailsExistence(String email, String username) {
+        if (userRepository.existsByEmail(email)) {
+            throw new UserAlreadyExistsException();
+        }
+        if (userRepository.existsByUsername(username)) {
+            throw new UsernameAlreadyExistsException();
+        }
     }
 }
