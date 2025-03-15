@@ -4,6 +4,10 @@ import com.evelateresume.user_service.dto.AuthRequest;
 import com.evelateresume.user_service.dto.RegisterRequest;
 import com.evelateresume.user_service.entity.User;
 import com.evelateresume.user_service.entity.UserRole;
+import com.evelateresume.user_service.exception.UnauthorizedException;
+import com.evelateresume.user_service.exception.UserAlreadyExistsException;
+import com.evelateresume.user_service.exception.UsernameAlreadyExistsException;
+import com.evelateresume.user_service.exception.UsernameNotFoundException;
 import com.evelateresume.user_service.repository.UserRepository;
 import com.evelateresume.user_service.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +15,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,20 +30,28 @@ public class AuthenticationService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public String loginUser(AuthRequest authRequest) {
+        Optional<User> user = userRepository.findByUsername(authRequest.username());
+        if (user.isEmpty()) {
+            throw new UsernameNotFoundException();
+        }
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(authRequest.username(), authRequest.password())
         );
-        Optional<User> user = userRepository.findByUsername(authentication.getName());
-        if (user.isEmpty()) {
-            throw new UsernameNotFoundException("User doesn't exist");
-        }
         String userId = user.get().getId();
-        return jwtUtil.generateToken(authentication, userId);
+
+        String token = jwtUtil.generateToken(authentication, userId);
+        if (token == null) {
+            throw new UnauthorizedException();
+        }
+        return token;
     }
 
     public UserDetails registerUser(RegisterRequest registerRequest) {
+        if (userRepository.existsByEmail(registerRequest.email())) {
+            throw new UserAlreadyExistsException();
+        }
         if (userRepository.existsByUsername(registerRequest.username())) {
-            throw new RuntimeException("User already exists!");
+            throw new UsernameAlreadyExistsException();
         }
 
         String encodedPassword = bCryptPasswordEncoder.encode(registerRequest.password());
