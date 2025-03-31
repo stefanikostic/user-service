@@ -18,14 +18,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -58,7 +56,8 @@ class AuthenticationServiceTest {
 
         // when
         // then
-        assertThrows(UsernameNotFoundException.class, () -> authenticationService.loginUser(authRequest));
+        assertThatThrownBy(() -> authenticationService.loginUser(authRequest))
+                .isInstanceOf(UsernameNotFoundException.class);
     }
 
     @Test
@@ -70,7 +69,8 @@ class AuthenticationServiceTest {
 
         // when
         // then
-        assertThrows(UnauthorizedException.class, () -> authenticationService.loginUser(authRequest));
+        assertThatThrownBy(() -> authenticationService.loginUser(authRequest))
+                .isInstanceOf(UnauthorizedException.class);
     }
 
     @Test
@@ -87,7 +87,7 @@ class AuthenticationServiceTest {
         String token = authenticationService.loginUser(authRequest);
 
         // then
-        assertNotNull(token);
+        assertThat(token).isNotNull();
     }
 
     @Test
@@ -98,7 +98,8 @@ class AuthenticationServiceTest {
 
         // when
         // then
-        assertThrows(UserAlreadyExistsException.class, () -> authenticationService.registerUser(registerRequest));
+        assertThatThrownBy(() -> authenticationService.registerUser(registerRequest))
+                .isInstanceOf(UserAlreadyExistsException.class);
     }
 
     @Test
@@ -109,27 +110,28 @@ class AuthenticationServiceTest {
 
         // when
         // then
-        assertThrows(UsernameAlreadyExistsException.class, () -> authenticationService.registerUser(registerRequest));
+        assertThatThrownBy(() -> authenticationService.registerUser(registerRequest))
+                .isInstanceOf(UsernameAlreadyExistsException.class);
     }
 
     @Test
-    void registerUser_registerIsSuccessful_returnsUserDetails() {
+    void registerUser_registerIsSuccessful_verifyUserDetails() {
         // given
         when(bCryptPasswordEncoder.encode(anyString())).thenReturn("passwordEncoded");
         RegisterRequest registerRequest = new RegisterRequest("stefanikostic", "password", "Stefani Kostic", "stefanikostic@hotmail.com");
 
         // when
-        UserDetails result = authenticationService.registerUser(registerRequest);
+        authenticationService.registerUser(registerRequest);
 
         // then
         ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
         verify(userRepository).save(userArgumentCaptor.capture());
         User capturedUser = userArgumentCaptor.getValue();
-        assertNotNull(capturedUser);
-        assertEquals("stefanikostic", capturedUser.getUsername());
-        assertEquals("stefanikostic@hotmail.com", capturedUser.getEmail());
-        assertEquals("Stefani Kostic", capturedUser.getFullName());
-        assertEquals("passwordEncoded", capturedUser.getPassword());
-        assertEquals(UserRole.USER.name(), capturedUser.getRole());
+        assertThat(capturedUser).isNotNull();
+        assertThat(capturedUser.getUsername()).isEqualTo("stefanikostic");
+        assertThat(capturedUser.getEmail()).isEqualTo("stefanikostic@hotmail.com");
+        assertThat(capturedUser.getFullName()).isEqualTo("Stefani Kostic");
+        assertThat(capturedUser.getPassword()).isEqualTo("passwordEncoded");
+        assertThat(capturedUser.getRole()).isEqualTo(UserRole.USER.name());
     }
 }
