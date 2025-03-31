@@ -14,9 +14,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
@@ -36,7 +35,8 @@ class UserServiceTest {
 
         // when
         // then
-        assertThrows(UsernameNotFoundException.class, () -> userService.loadUserByUsername("username"));
+        assertThatThrownBy(() -> userService.loadUserByUsername("username"))
+                .isInstanceOf(UsernameNotFoundException.class);
     }
 
     @Test
@@ -49,12 +49,12 @@ class UserServiceTest {
         UserDetails result = userService.loadUserByUsername("username");
 
         // then
-        assertNotNull(result);
-        assertEquals("username", result.getUsername());
-        assertEquals("password", result.getPassword());
-        assertNotNull(result.getAuthorities());
+        assertThat(result).isNotNull();
+        assertThat(result.getUsername()).isEqualTo("username");
+        assertThat(result.getPassword()).isEqualTo("password");
+        assertThat(result.getAuthorities()).isNotNull();
         GrantedAuthority authority = result.getAuthorities().stream().findFirst().orElse(null);
-        assertNotNull(authority);
-        assertEquals(UserRole.ADMIN.name(), authority.getAuthority());
+        assertThat(authority).isNotNull();
+        assertThat(authority.getAuthority()).isEqualTo(UserRole.ADMIN.name());
     }
 }

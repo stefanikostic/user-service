@@ -11,8 +11,9 @@ public record RegisterRequest(@NotNull
                               String username,
                               @NotNull
                               @Pattern(regexp = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
-                                      message = "Password must contain at least one uppercase letter, one lowercase letter, " +
-                                              "one digit, one special character, and be at least 8 characters long.")
+                                      message = "Password must contain at least one uppercase letter, " +
+                                              "one lowercase letter, one digit, one special character," +
+                                              " and be at least 8 characters long.")
                               String password,
                               @NotNull
                               @Pattern(regexp = "^[A-Za-z]+(?: [A-Za-z]+)*$",
